@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>PracticePatients</title>
+<meta name="application-name" content="PracticePatients"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Patients"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#080d14"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#080d14; --surface:#0e1520; --surface2:#151e2c; --surface3:#1c2638;
+  --border:#243044; --text:#dde8f5; --muted:#5a7090; --dim:#2a3a50;
+  --new:#6ea8e8; --new-dim:rgba(110,168,232,0.12);
+  --fin:#e87e6e; --fin-dim:rgba(232,126,110,0.12);
+  --active:#b088e8; --active-dim:rgba(176,136,232,0.12);
+  --brace:#6ea8e8; --remov:#7ec8c8; --align:#a888e8; --trans:#e8c86e;
+  --accent:#89c4f0; --danger:#c05050;
+  --radius:14px; --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;padding-bottom:calc(100px + env(safe-area-inset-bottom));}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 18px 0;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.app-title{font-family:'Cormorant Garamond',serif;font-size:24px;line-height:1;font-weight:600;}
+.app-title em{color:var(--accent);font-style:italic;}
+.hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted);font-family:'IBM Plex Sans',sans-serif;transition:color .15s;white-space:nowrap;}
+.hbtn:hover{color:var(--text);}
+.hbtn.blue{color:var(--new);}
+
+/* NAV */
+.nav-tabs{display:flex;}
+.nav-tab{flex:1;padding:9px 4px;text-align:center;font-size:12px;font-weight:500;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:'IBM Plex Sans',sans-serif;}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+/* CAT TOGGLE */
+.cat-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.ctbtn{padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.ctbtn.active-new{background:var(--new-dim);border-color:var(--new);color:var(--new);}
+.ctbtn.active-fin{background:var(--fin-dim);border-color:var(--fin);color:var(--fin);}
+
+/* PAGES */
+.page{display:none;padding:16px;max-width:480px;margin:0 auto;}
+.page.active{display:block;}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat-card.new-c::before{background:var(--new);}
+.stat-card.fin-c::before{background:var(--fin);}
+.stat-card.brace-c::before{background:var(--brace);}
+.stat-card.remov-c::before{background:var(--remov);}
+.stat-card.align-c::before{background:var(--align);}
+.stat-card.trans-c::before{background:var(--trans);}
+.stat-card.total-c::before{background:var(--accent);}
+.stat-card.avg-c::before{background:var(--muted);}
+.stat-card .slbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.stat-card .sval{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1;font-weight:600;}
+.stat-card.new-c .sval{color:var(--new);}
+.stat-card.fin-c .sval{color:var(--fin);}
+.stat-card.active-c::before{background:var(--active);}
+.stat-card.active-c .sval{color:var(--active);}
+.stat-card.brace-c .sval{color:var(--brace);}
+.stat-card.remov-c .sval{color:var(--remov);}
+.stat-card.align-c .sval{color:var(--align);}
+.stat-card.trans-c .sval{color:var(--trans);}
+.stat-card.total-c .sval{color:var(--accent);}
+.stat-card.avg-c .sval{color:var(--muted);}
+.stat-card-wide{grid-column:1/-1;}
+
+/* SECTION */
+.sec-title{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 10px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* DAY LIST */
+.day-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.day-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:none;}}
+.day-date-col{min-width:52px;}
+.day-date-num{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;line-height:1;color:var(--accent);}
+.day-date-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.day-pills{flex:1;display:flex;flex-wrap:wrap;gap:5px;}
+.dpill{display:flex;align-items:center;gap:3px;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:500;}
+.dpill.brace{background:rgba(110,168,232,0.15);color:var(--brace);}
+.dpill.remov{background:rgba(126,200,200,0.15);color:var(--remov);}
+.dpill.align{background:rgba(168,136,232,0.15);color:var(--align);}
+.dpill.trans{background:rgba(232,200,110,0.15);color:var(--trans);}
+.dpill.fin{background:var(--fin-dim);color:var(--fin);}
+.day-total-badge{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--accent);flex-shrink:0;min-width:28px;text-align:right;}
+.day-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:3px;border-radius:5px;transition:color .15s;flex-shrink:0;}
+.day-del:hover{color:var(--danger);}
+.empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
+
+/* MONTH NAV */
+.month-nav{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;margin-bottom:12px;}
+.mnav-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 4px;transition:color .15s;}
+.mnav-btn:hover{color:var(--text);}
+.mnav-label{flex:1;text-align:center;font-size:13px;font-weight:500;}
+
+/* TABLES */
+.period-table{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;}
+.pt-header{display:grid;padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.pt-header span,.pt-row span{font-size:11px;}
+.pt-header span{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);}
+.pt-header span:not(:first-child),.pt-row .pval{text-align:right;}
+.pt-row{display:grid;padding:10px 12px;border-bottom:1px solid var(--border);transition:background .15s;}
+.pt-row:last-child{border-bottom:none;}
+.pt-row:hover{background:var(--surface2);}
+.pt-row.hl{background:var(--new-dim);}
+.pt-row .pname{font-size:13px;color:var(--text);}
+.pt-row .pval{font-size:12px;color:var(--muted);}
+.pt-row .pval.hi{color:var(--accent);font-weight:600;}
+.pt-footer{display:grid;padding:10px 12px;background:var(--surface3);border-top:1px solid var(--border);}
+.pt-footer span{font-size:12px;font-weight:600;}
+.pt-footer span:not(:first-child){text-align:right;color:var(--accent);}
+
+/* YEAR TOGGLE */
+.year-toggle{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.ytbtn{padding:7px 12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.ytbtn.active{background:var(--new-dim);border-color:var(--new);color:var(--new);}
+
+/* CHARTS */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
+.chart-card .ctitle{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:2px;}
+.chart-card .csub{font-size:11px;color:var(--dim);margin-bottom:12px;}
+.range-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.rbtn{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;}
+.rbtn.active{background:var(--new-dim);border-color:var(--new);color:var(--new);}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:50%;transform:translateX(50%);background:var(--new);color:#080d14;border:none;border-radius:50px;padding:13px 26px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 8px 28px rgba(110,168,232,0.3);display:flex;align-items:center;gap:8px;transition:transform .15s,box-shadow .15s;z-index:200;}
+.fab:hover{transform:translateX(50%) translateY(-2px);box-shadow:0 12px 34px rgba(110,168,232,0.4);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(4px);z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:22px 18px 34px;width:100%;max-width:480px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:92vh;overflow-y:auto;}
+.modal-overlay.open .modal{transform:none;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;margin-bottom:16px;}
+.form-group{margin-bottom:12px;}
+label{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+input[type=date],input[type=number]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:14px;outline:none;transition:border-color .15s;-webkit-appearance:none;}
+input:focus{border-color:var(--accent);}
+.count-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.count-field label{margin-bottom:5px;}
+.count-field input{text-align:center;font-size:18px;font-weight:600;}
+.count-field.brace input:focus{border-color:var(--brace);}
+.count-field.remov input:focus{border-color:var(--remov);}
+.count-field.align input:focus{border-color:var(--align);}
+.count-field.trans input:focus{border-color:var(--trans);}
+.count-field.fin input:focus{border-color:var(--fin);}
+.total-preview{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;display:flex;justify-content:space-between;align-items:center;}
+.total-preview span:first-child{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+.total-preview span:last-child{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--accent);}
+.submit-btn{width:100%;background:var(--new);color:#080d14;border:none;border-radius:var(--radius-sm);padding:13px;font-family:'IBM Plex Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:10px;}
+.submit-btn:hover{opacity:.88;}
+.cancel-btn{width:100%;background:none;border:none;color:var(--muted);font-family:'IBM Plex Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px;padding:7px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="app-title">Practice<em>Patients</em></div>
+    <div style="display:flex;gap:6px;">
+      <button class="hbtn blue" onclick="exportCSV()">⬇ CSV</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('daily',this)">Daily</button>
+    <button class="nav-tab" onclick="showPage('monthly',this)">Monthly</button>
+    <button class="nav-tab" onclick="showPage('yearly',this)">Yearly</button>
+    <button class="nav-tab" onclick="showPage('active',this)">Active</button>
+    <button class="nav-tab" onclick="showPage('charts',this)">Charts</button>
+  </div>
+</header>
+
+<!-- DAILY PAGE -->
+<div class="page active" id="page-daily">
+  <div class="month-nav">
+    <button class="mnav-btn" onclick="shiftMonth(-1)">‹</button>
+    <div class="mnav-label" id="dailyMonthLabel"></div>
+    <button class="mnav-btn" onclick="shiftMonth(1)">›</button>
+  </div>
+  <!-- Summary cards -->
+  <div class="stats-grid">
+    <div class="stat-card new-c stat-card-wide"><div class="slbl">New Patients This Month</div><div class="sval" id="dNewTotal">0</div></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card brace-c"><div class="slbl">🦷 Braces</div><div class="sval" id="dBrace">0</div></div>
+    <div class="stat-card remov-c"><div class="slbl">🔵 Removable</div><div class="sval" id="dRemov">0</div></div>
+    <div class="stat-card align-c"><div class="slbl">✨ Aligners</div><div class="sval" id="dAlign">0</div></div>
+    <div class="stat-card trans-c"><div class="slbl">🔄 Transfers</div><div class="sval" id="dTrans">0</div></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card fin-c stat-card-wide"><div class="slbl">Finished Patients This Month</div><div class="sval" id="dFinTotal">0</div></div>
+  </div>
+  <div class="sec-title">Daily Entries</div>
+  <div class="day-list" id="dayList"></div>
+</div>
+
+<!-- MONTHLY PAGE -->
+<div class="page" id="page-monthly">
+  <div class="cat-toggle" style="margin-bottom:14px;">
+    <button class="ctbtn active-new" id="mCatNew" onclick="setMonthlyCat('new',this)">🆕 New Patients</button>
+    <button class="ctbtn" id="mCatFin" onclick="setMonthlyCat('fin',this)">🎓 Finished</button>
+  </div>
+  <div class="year-toggle" id="monthlyYearToggle"></div>
+  <div id="monthlyContent"></div>
+</div>
+
+<!-- YEARLY PAGE -->
+<div class="page" id="page-yearly">
+  <div class="cat-toggle" style="margin-bottom:14px;">
+    <button class="ctbtn active-new" id="yCatNew" onclick="setYearlyCat('new',this)">🆕 New Patients</button>
+    <button class="ctbtn" id="yCatFin" onclick="setYearlyCat('fin',this)">🎓 Finished</button>
+  </div>
+  <div class="year-toggle">
+    <button class="ytbtn active" id="yrCalBtn" onclick="setYearView('cal',this)">Calendar Years</button>
+    <button class="ytbtn" id="yrPracBtn" onclick="setYearView('prac',this)">Practice Years</button>
+  </div>
+  <div id="yearlyContent"></div>
+</div>
+
+
+<!-- ACTIVE PAGE -->
+<div class="page" id="page-active">
+  <div class="stats-grid">
+    <div class="stat-card active-c stat-card-wide">
+      <div class="slbl">Currently Active Patients</div>
+      <div class="sval" id="activeCount">0</div>
+    </div>
+    <div class="stat-card new-c">
+      <div class="slbl">All-Time New</div>
+      <div class="sval" id="activeTotalNew">0</div>
+    </div>
+    <div class="stat-card fin-c">
+      <div class="slbl">All-Time Finished</div>
+      <div class="sval" id="activeTotalFin">0</div>
+    </div>
+  </div>
+  <div class="sec-title">Active Patients Over Time</div>
+  <div class="chart-card" style="margin-top:0;">
+    <div class="ctitle">Cumulative Active Patients</div>
+    <div class="csub">Running total: new patients accumulated minus finished</div>
+    <div class="range-row" id="activeRangeRow">
+      <button class="rbtn active" onclick="setActiveN(12,this)">12M</button>
+      <button class="rbtn" onclick="setActiveN(24,this)">24M</button>
+      <button class="rbtn" onclick="setActiveN(9999,this)">All</button>
+    </div>
+    <canvas id="chartActive" height="220"></canvas>
+  </div>
+  <div class="sec-title">Monthly Net Change</div>
+  <div class="chart-card">
+    <div class="ctitle">Net Patients per Month</div>
+    <div class="csub">New patients minus finished patients each month</div>
+    <div class="range-row" id="netRangeRow">
+      <button class="rbtn active" onclick="setNetN(12,this)">12M</button>
+      <button class="rbtn" onclick="setNetN(24,this)">24M</button>
+      <button class="rbtn" onclick="setNetN(9999,this)">All</button>
+    </div>
+    <canvas id="chartNet" height="200"></canvas>
+  </div>
+</div>
+
+<!-- CHARTS PAGE -->
+<div class="page" id="page-charts">
+  <div id="chartsContent"></div>
+</div>
+
+<button class="fab" onclick="openModal()">＋ Record Day</button>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Record a Day</div>
+    <div class="form-group"><label>Date</label><input type="date" id="entryDate"/></div>
+
+    <div class="sec-title" style="margin-top:4px;">🆕 New Patients</div>
+    <div class="count-grid">
+      <div class="count-field brace form-group"><label>🦷 Braces</label><input type="number" id="eBrace" min="0" value="0" oninput="updatePreview()"/></div>
+      <div class="count-field remov form-group"><label>🔵 Removable</label><input type="number" id="eRemov" min="0" value="0" oninput="updatePreview()"/></div>
+      <div class="count-field align form-group"><label>✨ Aligners</label><input type="number" id="eAlign" min="0" value="0" oninput="updatePreview()"/></div>
+      <div class="count-field trans form-group"><label>🔄 Transfers</label><input type="number" id="eTrans" min="0" value="0" oninput="updatePreview()"/></div>
+    </div>
+    <div class="form-group">
+      <label>New Total</label>
+      <div class="total-preview"><span>Braces + Removable + Aligners + Transfers</span><span id="previewNew">0</span></div>
+    </div>
+
+    <div class="sec-title">🎓 Finished Patients</div>
+    <div class="count-field fin form-group" style="max-width:160px;">
+      <label>Count</label>
+      <input type="number" id="eFin" min="0" value="0" oninput="updatePreview()"/>
+    </div>
+
+    <button class="submit-btn" onclick="saveEntry()">Save Entry</button>
+    <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════
+   DATA
+══════════════════════════ */
+// entry: {date, brace, remov, align, trans, fin}
+let entries = JSON.parse(localStorage.getItem('pp_entries') || '[{"date":"2022-11-01","brace":3,"remov":0,"align":0,"trans":0,"fin":0},{"date":"2022-12-01","brace":1,"remov":0,"align":0,"trans":0,"fin":0},{"date":"2023-01-01","brace":1,"remov":1,"align":0,"trans":0,"fin":0},{"date":"2023-02-01","brace":2,"remov":0,"align":1,"trans":0,"fin":0},{"date":"2023-03-01","brace":3,"remov":1,"align":0,"trans":0,"fin":0},{"date":"2023-04-01","brace":4,"remov":0,"align":0,"trans":0,"fin":0},{"date":"2023-05-01","brace":2,"remov":1,"align":1,"trans":0,"fin":0},{"date":"2023-06-01","brace":3,"remov":0,"align":0,"trans":1,"fin":0},{"date":"2023-07-01","brace":3,"remov":1,"align":0,"trans":0,"fin":0},{"date":"2023-09-01","brace":2,"remov":0,"align":0,"trans":0,"fin":0},{"date":"2023-10-01","brace":3,"remov":0,"align":1,"trans":0,"fin":0},{"date":"2023-11-01","brace":1,"remov":1,"align":0,"trans":0,"fin":0},{"date":"2023-12-01","brace":2,"remov":0,"align":0,"trans":0,"fin":1},{"date":"2024-01-01","brace":4,"remov":0,"align":0,"trans":0,"fin":1},{"date":"2024-02-01","brace":1,"remov":1,"align":1,"trans":0,"fin":0},{"date":"2024-03-01","brace":3,"remov":0,"align":0,"trans":0,"fin":0},{"date":"2024-04-01","brace":4,"remov":0,"align":0,"trans":0,"fin":1},{"date":"2024-05-01","brace":2,"remov":1,"align":1,"trans":0,"fin":0},{"date":"2024-06-01","brace":5,"remov":1,"align":0,"trans":0,"fin":0},{"date":"2024-07-01","brace":4,"remov":0,"align":0,"trans":0,"fin":2},{"date":"2024-08-01","brace":1,"remov":0,"align":1,"trans":0,"fin":2},{"date":"2024-09-01","brace":7,"remov":2,"align":0,"trans":1,"fin":1},{"date":"2024-10-01","brace":4,"remov":0,"align":1,"trans":0,"fin":1},{"date":"2024-11-01","brace":4,"remov":1,"align":0,"trans":0,"fin":1},{"date":"2024-12-01","brace":4,"remov":0,"align":0,"trans":0,"fin":1},{"date":"2025-01-01","brace":1,"remov":1,"align":1,"trans":0,"fin":3},{"date":"2025-02-01","brace":3,"remov":0,"align":0,"trans":0,"fin":3},{"date":"2025-03-01","brace":5,"remov":1,"align":0,"trans":0,"fin":1},{"date":"2025-04-01","brace":2,"remov":0,"align":1,"trans":0,"fin":3},{"date":"2025-05-01","brace":5,"remov":1,"align":0,"trans":0,"fin":2},{"date":"2025-06-01","brace":3,"remov":1,"align":1,"trans":1,"fin":3},{"date":"2025-07-01","brace":6,"remov":1,"align":0,"trans":0,"fin":2},{"date":"2025-08-01","brace":4,"remov":0,"align":1,"trans":0,"fin":3},{"date":"2025-09-01","brace":11,"remov":2,"align":1,"trans":0,"fin":0},{"date":"2025-10-01","brace":10,"remov":1,"align":1,"trans":0,"fin":2},{"date":"2025-11-01","brace":3,"remov":1,"align":0,"trans":0,"fin":2},{"date":"2025-12-01","brace":4,"remov":1,"align":0,"trans":1,"fin":3},{"date":"2026-01-01","brace":8,"remov":1,"align":1,"trans":0,"fin":2},{"date":"2026-02-01","brace":6,"remov":1,"align":1,"trans":0,"fin":5},{"date":"2026-03-01","brace":2,"remov":0,"align":0,"trans":0,"fin":4}]');
+let currentPage = 'daily';
+let dailyMonth = new Date().toISOString().slice(0,7);
+let monthlyCat = 'new';
+let yearlyCat = 'new';
+let yearView = 'cal';
+let monthlyYearFilter = 'all';
+let charts = {};
+let chartTrendN = 12;
+let splitN = 12;
+let chartYearSel = new Date().getFullYear();
+let pracYearSel = null;
+let chartCompareMonth = String(new Date().getMonth()+1).padStart(2,'0');
+
+/* ══════════════════════════
+   HELPERS
+══════════════════════════ */
+function allMonths() {
+  const months=[], now=new Date();
+  let d=new Date(2022,10,1);
+  while(d<=now){months.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);d.setMonth(d.getMonth()+1);}
+  return months;
+}
+function monthLabel(m){return new Date(m+'-01').toLocaleString('default',{month:'short',year:'numeric'});}
+function monthShort(m){return new Date(m+'-01').toLocaleString('default',{month:'short'});}
+function calYears(){const now=new Date().getFullYear();const ys=[];for(let y=2022;y<=now;y++)ys.push(y);return ys;}
+function pracYears(){
+  const now=new Date();
+  const maxN=(now.getFullYear()-2022)+(now.getMonth()>=10?1:0);
+  const yrs=[];
+  for(let n=1;n<=maxN+1;n++){const sy=2021+n;yrs.push({n,label:`Year ${n}`,start:`${sy}-11`,end:`${sy+1}-10`});}
+  return yrs;
+}
+function monthsInCalYear(y){return allMonths().filter(m=>m.startsWith(y+''));}
+function monthsInPracYear(py){return allMonths().filter(m=>m>=py.start&&m<=py.end);}
+function entriesForMonth(m){return entries.filter(e=>e.date.slice(0,7)===m);}
+function sumMonth(m){
+  const es=entriesForMonth(m);
+  return{brace:es.reduce((s,e)=>s+e.brace,0),remov:es.reduce((s,e)=>s+e.remov,0),align:es.reduce((s,e)=>s+e.align,0),trans:es.reduce((s,e)=>s+e.trans,0),newTotal:es.reduce((s,e)=>s+e.brace+e.remov+e.align+e.trans,0),fin:es.reduce((s,e)=>s+e.fin,0)};
+}
+function avgOf(arr){const nz=arr.filter(v=>v>0);return nz.length?nz.reduce((a,b)=>a+b,0)/nz.length:0;}
+
+/* ══════════════════════════
+   NAVIGATION
+══════════════════════════ */
+function showPage(name,el){
+  currentPage=name;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  el.classList.add('active');
+  renderPage(name);
+}
+function renderPage(n){
+  if(n==='daily')renderDaily();
+  else if(n==='monthly')renderMonthly();
+  else if(n==='yearly')renderYearly();
+  else if(n==='active')renderActive();
+  else if(n==='charts')renderCharts();
+}
+
+/* ══════════════════════════
+   DAILY
+══════════════════════════ */
+function renderDaily(){
+  const d=new Date(dailyMonth+'-01');
+  document.getElementById('dailyMonthLabel').textContent=d.toLocaleString('default',{month:'long',year:'numeric'});
+  const s=sumMonth(dailyMonth);
+  document.getElementById('dNewTotal').textContent=s.newTotal;
+  document.getElementById('dBrace').textContent=s.brace;
+  document.getElementById('dRemov').textContent=s.remov;
+  document.getElementById('dAlign').textContent=s.align;
+  document.getElementById('dTrans').textContent=s.trans;
+  document.getElementById('dFinTotal').textContent=s.fin;
+  const es=entriesForMonth(dailyMonth).sort((a,b)=>b.date.localeCompare(a.date));
+  const list=document.getElementById('dayList');
+  if(!es.length){list.innerHTML='<div class="empty">No entries for this month</div>';return;}
+  list.innerHTML=es.map(e=>{
+    const ri=entries.indexOf(e);
+    const dd=new Date(e.date+'T00:00:00');
+    const newT=e.brace+e.remov+e.align+e.trans;
+    const pills=[];
+    if(e.brace>0)pills.push(`<span class="dpill brace">🦷 ${e.brace}</span>`);
+    if(e.remov>0)pills.push(`<span class="dpill remov">🔵 ${e.remov}</span>`);
+    if(e.align>0)pills.push(`<span class="dpill align">✨ ${e.align}</span>`);
+    if(e.trans>0)pills.push(`<span class="dpill trans">🔄 ${e.trans}</span>`);
+    if(e.fin>0)pills.push(`<span class="dpill fin">🎓 ${e.fin}</span>`);
+    return`<div class="day-item">
+      <div class="day-date-col">
+        <div class="day-date-num">${dd.getDate()}</div>
+        <div class="day-date-sub">${dd.toLocaleString('default',{weekday:'short'})} ${dd.toLocaleString('default',{month:'short'})}</div>
+      </div>
+      <div class="day-pills">${pills.join('')}</div>
+      <div class="day-total-badge">${newT+e.fin}</div>
+      <button class="day-del" onclick="deleteEntry(${ri})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function shiftMonth(dir){
+  const d=new Date(dailyMonth+'-01');d.setMonth(d.getMonth()+dir);
+  const nm=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  if(nm<'2022-11'||nm>new Date().toISOString().slice(0,7))return;
+  dailyMonth=nm;renderDaily();
+}
+
+/* ══════════════════════════
+   MONTHLY
+══════════════════════════ */
+function setMonthlyCat(cat,el){
+  monthlyCat=cat;
+  document.getElementById('mCatNew').className='ctbtn'+(cat==='new'?' active-new':'');
+  document.getElementById('mCatFin').className='ctbtn'+(cat==='fin'?' active-fin':'');
+  renderMonthly();
+}
+
+function renderMonthly(){
+  // Build year filter toggle
+  const toggle=document.getElementById('monthlyYearToggle');
+  const opts=[{val:'all',label:'All Time'},...calYears().map(y=>({val:'cal-'+y,label:String(y)})),...pracYears().map(py=>({val:'prac-'+py.n,label:py.label}))];
+  toggle.innerHTML=opts.map(o=>`<button class="ytbtn ${monthlyYearFilter===o.val?'active':''}" onclick="setMonthlyFilter('${o.val}')">${o.label}</button>`).join('');
+
+  let months;
+  if(monthlyYearFilter==='all')months=allMonths();
+  else if(monthlyYearFilter.startsWith('cal-'))months=monthsInCalYear(parseInt(monthlyYearFilter.split('-')[1]));
+  else{const py=pracYears().find(p=>p.n===parseInt(monthlyYearFilter.split('-')[1]));months=py?monthsInPracYear(py):allMonths();}
+
+  const isNew=monthlyCat==='new';
+  const rows=months.map(m=>{const s=sumMonth(m);return{m,val:isNew?s.newTotal:s.fin,brace:s.brace,remov:s.remov,align:s.align,trans:s.trans};});
+  const grandTotal=rows.reduce((s,r)=>s+r.val,0);
+  const avg=avgOf(rows.map(r=>r.val));
+  const cont=document.getElementById('monthlyContent');
+
+  if(isNew){
+    const tBrace=rows.reduce((s,r)=>s+r.brace,0);
+    const tRemov=rows.reduce((s,r)=>s+r.remov,0);
+    const tAlign=rows.reduce((s,r)=>s+r.align,0);
+    const tTrans=rows.reduce((s,r)=>s+r.trans,0);
+    cont.innerHTML=`
+      <div class="stats-grid" style="margin-bottom:12px;">
+        <div class="stat-card new-c stat-card-wide"><div class="slbl">Period Total — New Patients</div><div class="sval">${grandTotal}</div></div>
+        <div class="stat-card brace-c"><div class="slbl">🦷 Braces</div><div class="sval">${tBrace}</div></div>
+        <div class="stat-card remov-c"><div class="slbl">🔵 Removable</div><div class="sval">${tRemov}</div></div>
+        <div class="stat-card align-c"><div class="slbl">✨ Aligners</div><div class="sval">${tAlign}</div></div>
+        <div class="stat-card trans-c"><div class="slbl">🔄 Transfers</div><div class="sval">${tTrans}</div></div>
+        <div class="stat-card avg-c stat-card-wide"><div class="slbl">Monthly Average</div><div class="sval">${avg.toFixed(1)}</div></div>
+      </div>
+      <div class="period-table">
+        <div class="pt-header" style="grid-template-columns:1fr 50px 50px 50px 50px 50px;"><span>Month</span><span>🦷</span><span>🔵</span><span>✨</span><span>🔄</span><span>Total</span></div>
+        ${rows.slice().reverse().map(r=>`<div class="pt-row ${r.m===new Date().toISOString().slice(0,7)?'hl':''}" style="grid-template-columns:1fr 50px 50px 50px 50px 50px;">
+          <span class="pname">${monthLabel(r.m)}</span>
+          <span class="pval">${r.brace||'—'}</span><span class="pval">${r.remov||'—'}</span><span class="pval">${r.align||'—'}</span><span class="pval">${r.trans||'—'}</span>
+          <span class="pval hi">${r.val||'—'}</span></div>`).join('')}
+        <div class="pt-footer" style="grid-template-columns:1fr 50px 50px 50px 50px 50px;"><span>Total</span><span>${tBrace}</span><span>${tRemov}</span><span>${tAlign}</span><span>${tTrans}</span><span>${grandTotal}</span></div>
+      </div>`;
+  } else {
+    cont.innerHTML=`
+      <div class="stats-grid" style="margin-bottom:12px;">
+        <div class="stat-card fin-c stat-card-wide"><div class="slbl">Period Total — Finished Patients</div><div class="sval">${grandTotal}</div></div>
+        <div class="stat-card avg-c stat-card-wide"><div class="slbl">Monthly Average</div><div class="sval">${avg.toFixed(1)}</div></div>
+      </div>
+      <div class="period-table">
+        <div class="pt-header" style="grid-template-columns:1fr 80px;"><span>Month</span><span>Finished</span></div>
+        ${rows.slice().reverse().map(r=>`<div class="pt-row ${r.m===new Date().toISOString().slice(0,7)?'hl':''}" style="grid-template-columns:1fr 80px;">
+          <span class="pname">${monthLabel(r.m)}</span><span class="pval hi">${r.val||'—'}</span></div>`).join('')}
+        <div class="pt-footer" style="grid-template-columns:1fr 80px;"><span>Total</span><span>${grandTotal}</span></div>
+      </div>`;
+  }
+}
+
+function setMonthlyFilter(val){monthlyYearFilter=val;renderMonthly();}
+
+/* ══════════════════════════
+   YEARLY
+══════════════════════════ */
+function setYearlyCat(cat,el){
+  yearlyCat=cat;
+  document.getElementById('yCatNew').className='ctbtn'+(cat==='new'?' active-new':'');
+  document.getElementById('yCatFin').className='ctbtn'+(cat==='fin'?' active-fin':'');
+  renderYearly();
+}
+function setYearView(v,el){
+  yearView=v;
+  document.getElementById('yrCalBtn').className='ytbtn'+(v==='cal'?' active':'');
+  document.getElementById('yrPracBtn').className='ytbtn'+(v==='prac'?' active':'');
+  renderYearly();
+}
+
+function renderYearly(){
+  const isNew=yearlyCat==='new';
+  const allMs=allMonths();
+  const grandNew=allMs.reduce((s,m)=>s+sumMonth(m).newTotal,0);
+  const grandFin=allMs.reduce((s,m)=>s+sumMonth(m).fin,0);
+  const overallAvgNew=avgOf(allMs.map(m=>sumMonth(m).newTotal));
+  const overallAvgFin=avgOf(allMs.map(m=>sumMonth(m).fin));
+
+  let rows=[];
+  if(yearView==='cal'){
+    rows=calYears().map(y=>{
+      const ms=monthsInCalYear(y);
+      const newT=ms.reduce((s,m)=>s+sumMonth(m).newTotal,0);
+      const brace=ms.reduce((s,m)=>s+sumMonth(m).brace,0);
+      const remov=ms.reduce((s,m)=>s+sumMonth(m).remov,0);
+      const align=ms.reduce((s,m)=>s+sumMonth(m).align,0);
+      const trans=ms.reduce((s,m)=>s+sumMonth(m).trans,0);
+      const fin=ms.reduce((s,m)=>s+sumMonth(m).fin,0);
+      const avgNew=avgOf(ms.map(m=>sumMonth(m).newTotal));
+      const avgFin=avgOf(ms.map(m=>sumMonth(m).fin));
+      return{label:String(y),newT,brace,remov,align,trans,fin,avgNew,avgFin};
+    });
+  } else {
+    rows=pracYears().map(py=>{
+      const ms=monthsInPracYear(py);
+      const newT=ms.reduce((s,m)=>s+sumMonth(m).newTotal,0);
+      const brace=ms.reduce((s,m)=>s+sumMonth(m).brace,0);
+      const remov=ms.reduce((s,m)=>s+sumMonth(m).remov,0);
+      const align=ms.reduce((s,m)=>s+sumMonth(m).align,0);
+      const trans=ms.reduce((s,m)=>s+sumMonth(m).trans,0);
+      const fin=ms.reduce((s,m)=>s+sumMonth(m).fin,0);
+      const avgNew=avgOf(ms.map(m=>sumMonth(m).newTotal));
+      const avgFin=avgOf(ms.map(m=>sumMonth(m).fin));
+      return{label:py.label,newT,brace,remov,align,trans,fin,avgNew,avgFin};
+    });
+  }
+
+  const cont=document.getElementById('yearlyContent');
+  if(isNew){
+    const tB=rows.reduce((s,r)=>s+r.brace,0),tR=rows.reduce((s,r)=>s+r.remov,0),tA=rows.reduce((s,r)=>s+r.align,0),tT=rows.reduce((s,r)=>s+r.trans,0);
+    cont.innerHTML=`
+      <div class="stats-grid" style="margin-bottom:12px;">
+        <div class="stat-card new-c stat-card-wide"><div class="slbl">All-Time New Patients (since Nov 2022)</div><div class="sval">${grandNew}</div></div>
+        <div class="stat-card brace-c"><div class="slbl">🦷 All Braces</div><div class="sval">${tB}</div></div>
+        <div class="stat-card remov-c"><div class="slbl">🔵 All Removable</div><div class="sval">${tR}</div></div>
+        <div class="stat-card align-c"><div class="slbl">✨ All Aligners</div><div class="sval">${tA}</div></div>
+        <div class="stat-card trans-c"><div class="slbl">🔄 All Transfers</div><div class="sval">${tT}</div></div>
+        <div class="stat-card avg-c stat-card-wide"><div class="slbl">Overall Monthly Average</div><div class="sval">${overallAvgNew.toFixed(1)}</div></div>
+      </div>
+      <div class="period-table">
+        <div class="pt-header" style="grid-template-columns:1fr 44px 44px 44px 44px 50px;"><span>${yearView==='cal'?'Year':'Period'}</span><span>🦷</span><span>🔵</span><span>✨</span><span>🔄</span><span>Total</span></div>
+        ${rows.map(r=>`<div class="pt-row" style="grid-template-columns:1fr 44px 44px 44px 44px 50px;">
+          <span class="pname">${r.label}</span><span class="pval">${r.brace||'—'}</span><span class="pval">${r.remov||'—'}</span><span class="pval">${r.align||'—'}</span><span class="pval">${r.trans||'—'}</span><span class="pval hi">${r.newT}</span></div>`).join('')}
+        <div class="pt-footer" style="grid-template-columns:1fr 44px 44px 44px 44px 50px;"><span>Total</span><span>${tB}</span><span>${tR}</span><span>${tA}</span><span>${tT}</span><span>${grandNew}</span></div>
+      </div>
+      <div class="sec-title">Monthly Averages by ${yearView==='cal'?'Calendar Year':'Practice Year'}</div>
+      <div class="period-table">
+        <div class="pt-header" style="grid-template-columns:1fr 90px;"><span>Period</span><span>Monthly Avg</span></div>
+        ${rows.map(r=>`<div class="pt-row" style="grid-template-columns:1fr 90px;"><span class="pname">${r.label}</span><span class="pval hi">${r.avgNew.toFixed(1)}</span></div>`).join('')}
+        <div class="pt-footer" style="grid-template-columns:1fr 90px;"><span>Overall Avg</span><span>${overallAvgNew.toFixed(1)}</span></div>
+      </div>`;
+  } else {
+    cont.innerHTML=`
+      <div class="stats-grid" style="margin-bottom:12px;">
+        <div class="stat-card fin-c stat-card-wide"><div class="slbl">All-Time Finished Patients (since Nov 2022)</div><div class="sval">${grandFin}</div></div>
+        <div class="stat-card avg-c stat-card-wide"><div class="slbl">Overall Monthly Average</div><div class="sval">${overallAvgFin.toFixed(1)}</div></div>
+      </div>
+      <div class="period-table">
+        <div class="pt-header" style="grid-template-columns:1fr 80px 80px;"><span>${yearView==='cal'?'Year':'Period'}</span><span>Total</span><span>Monthly Avg</span></div>
+        ${rows.map(r=>`<div class="pt-row" style="grid-template-columns:1fr 80px 80px;">
+          <span class="pname">${r.label}</span><span class="pval hi">${r.fin}</span><span class="pval">${r.avgFin.toFixed(1)}</span></div>`).join('')}
+        <div class="pt-footer" style="grid-template-columns:1fr 80px 80px;"><span>Grand Total</span><span>${grandFin}</span><span>${overallAvgFin.toFixed(1)}</span></div>
+      </div>`;
+  }
+}
+
+/* ══════════════════════════
+   CHARTS
+══════════════════════════ */
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function getRecentMonths(n){const a=allMonths();return n>=9999?a:a.slice(-n);}
+
+function renderCharts(){
+  const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const calYrs=calYears();
+  document.getElementById('chartsContent').innerHTML=`
+    <!-- Trend new vs finished -->
+    <div class="chart-card">
+      <div class="ctitle">Patient Trends Over Time</div>
+      <div class="csub">New vs finished patients per month</div>
+      <div class="range-row" id="trendRangeRow">
+        ${[6,12,24,'All'].map(n=>`<button class="rbtn ${n===12?'active':''}" onclick="setTrendN(${n==='All'?9999:n},this)">${n==='All'?'All':n+'M'}</button>`).join('')}
+      </div>
+      <canvas id="chartTrend" height="190"></canvas>
+    </div>
+    <!-- New patients breakdown stacked -->
+    <div class="chart-card">
+      <div class="ctitle">New Patients by Type</div>
+      <div class="csub">Monthly breakdown of treatment types</div>
+      <div class="range-row" id="typeRangeRow">
+        ${[6,12,24].map(n=>`<button class="rbtn ${n===12?'active':''}" onclick="setTypeN(${n},this)">${n}M</button>`).join('')}
+      </div>
+      <canvas id="chartType" height="200"></canvas>
+    </div>
+    <!-- Per-year monthly breakdown -->
+    <div class="chart-card">
+      <div class="ctitle">Year Breakdown by Month</div>
+      <div class="csub">Select a year to see monthly new patients</div>
+      <div class="range-row" id="yearMonthRow">
+        ${calYrs.map(y=>`<button class="rbtn ${y===calYrs[calYrs.length-1]?'active':''}" onclick="setYearSel(${y},this)">${y}</button>`).join('')}
+        ${pracYears().map(py=>`<button class="rbtn" onclick="setPracYearSel('${py.label}',this)">${py.label}</button>`).join('')}
+      </div>
+      <canvas id="chartYearMonth" height="200"></canvas>
+    </div>
+    <!-- Same month comparison -->
+    <div class="chart-card">
+      <div class="ctitle">Same Month — Year Comparison</div>
+      <div class="csub">Compare the same month across all years</div>
+      <div class="range-row" id="compareMonthRow">
+        ${monthNames.map((n,i)=>`<button class="rbtn ${String(i+1).padStart(2,'0')===chartCompareMonth?'active':''}" onclick="setCompareMonth('${String(i+1).padStart(2,'0')}',this)">${n}</button>`).join('')}
+      </div>
+      <canvas id="chartCompare" height="190"></canvas>
+    </div>`;
+
+  chartTrendN=12; typeN=12;
+  chartYearSel=calYrs[calYrs.length-1]; pracYearSel=null;
+  renderTrendChart(); renderTypeChart(); renderYearMonthChart(); renderCompareChart();
+}
+
+let typeN=12;
+
+function renderTrendChart(){
+  destroyChart('chartTrend');
+  const months=getRecentMonths(chartTrendN);
+  const ctx=document.getElementById('chartTrend');if(!ctx)return;
+  charts['chartTrend']=new Chart(ctx,{
+    type:'line',
+    data:{labels:months.map(m=>monthShort(m)),datasets:[
+      {label:'New',data:months.map(m=>sumMonth(m).newTotal),borderColor:'#6ea8e8',backgroundColor:'rgba(110,168,232,0.15)',tension:0.35,fill:true,pointBackgroundColor:'#6ea8e8',pointRadius:3,borderWidth:2},
+      {label:'Finished',data:months.map(m=>sumMonth(m).fin),borderColor:'#e87e6e',backgroundColor:'rgba(232,126,110,0.1)',tension:0.35,fill:true,pointBackgroundColor:'#e87e6e',pointRadius:3,borderWidth:2}
+    ]},
+    options:{plugins:{legend:{labels:{color:'#5a7090',font:{size:11},boxWidth:10}}},scales:{x:{grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}}},y:{grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}},beginAtZero:true}}}
+  });
+}
+function setTrendN(n,el){chartTrendN=n;document.querySelectorAll('#trendRangeRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderTrendChart();}
+
+function renderTypeChart(){
+  destroyChart('chartType');
+  const months=getRecentMonths(typeN);
+  const ctx=document.getElementById('chartType');if(!ctx)return;
+  charts['chartType']=new Chart(ctx,{
+    type:'bar',
+    data:{labels:months.map(m=>monthShort(m)),datasets:[
+      {label:'Braces',data:months.map(m=>sumMonth(m).brace),backgroundColor:'rgba(110,168,232,0.85)',borderRadius:3,borderSkipped:false},
+      {label:'Removable',data:months.map(m=>sumMonth(m).remov),backgroundColor:'rgba(126,200,200,0.85)',borderRadius:3,borderSkipped:false},
+      {label:'Aligners',data:months.map(m=>sumMonth(m).align),backgroundColor:'rgba(168,136,232,0.85)',borderRadius:3,borderSkipped:false},
+      {label:'Transfers',data:months.map(m=>sumMonth(m).trans),backgroundColor:'rgba(232,200,110,0.85)',borderRadius:3,borderSkipped:false}
+    ]},
+    options:{plugins:{legend:{labels:{color:'#5a7090',font:{size:10},boxWidth:10}}},scales:{x:{stacked:true,grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}}},y:{stacked:true,grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}},beginAtZero:true}}}
+  });
+}
+function setTypeN(n,el){typeN=n;document.querySelectorAll('#typeRangeRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderTypeChart();}
+
+function renderYearMonthChart(){
+  destroyChart('chartYearMonth');
+  const ctx=document.getElementById('chartYearMonth');if(!ctx)return;
+  let months;
+  if(pracYearSel){const py=pracYears().find(p=>p.label===pracYearSel);months=py?monthsInPracYear(py):[];}
+  else months=monthsInCalYear(chartYearSel);
+  charts['chartYearMonth']=new Chart(ctx,{
+    type:'bar',
+    data:{labels:months.map(m=>monthShort(m)),datasets:[
+      {label:'Braces',data:months.map(m=>sumMonth(m).brace),backgroundColor:'rgba(110,168,232,0.85)',borderRadius:3,borderSkipped:false},
+      {label:'Removable',data:months.map(m=>sumMonth(m).remov),backgroundColor:'rgba(126,200,200,0.85)',borderRadius:3,borderSkipped:false},
+      {label:'Aligners',data:months.map(m=>sumMonth(m).align),backgroundColor:'rgba(168,136,232,0.85)',borderRadius:3,borderSkipped:false},
+      {label:'Transfers',data:months.map(m=>sumMonth(m).trans),backgroundColor:'rgba(232,200,110,0.85)',borderRadius:3,borderSkipped:false}
+    ]},
+    options:{plugins:{legend:{labels:{color:'#5a7090',font:{size:10},boxWidth:10}}},scales:{x:{stacked:true,grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}}},y:{stacked:true,grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}},beginAtZero:true}}}
+  });
+}
+function setYearSel(y,el){chartYearSel=y;pracYearSel=null;document.querySelectorAll('#yearMonthRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderYearMonthChart();}
+function setPracYearSel(label,el){pracYearSel=label;chartYearSel=null;document.querySelectorAll('#yearMonthRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderYearMonthChart();}
+
+function renderCompareChart(){
+  destroyChart('chartCompare');
+  const ctx=document.getElementById('chartCompare');if(!ctx)return;
+  const allMs=allMonths().filter(m=>m.slice(5,7)===chartCompareMonth);
+  if(!allMs.length)return;
+  const labels=allMs.map(m=>m.slice(0,4));
+  charts['chartCompare']=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Braces',data:allMs.map(m=>sumMonth(m).brace),backgroundColor:'rgba(110,168,232,0.85)',borderRadius:4,borderSkipped:false},
+      {label:'Removable',data:allMs.map(m=>sumMonth(m).remov),backgroundColor:'rgba(126,200,200,0.85)',borderRadius:4,borderSkipped:false},
+      {label:'Aligners',data:allMs.map(m=>sumMonth(m).align),backgroundColor:'rgba(168,136,232,0.85)',borderRadius:4,borderSkipped:false},
+      {label:'Transfers',data:allMs.map(m=>sumMonth(m).trans),backgroundColor:'rgba(232,200,110,0.85)',borderRadius:4,borderSkipped:false},
+      {label:'Finished',data:allMs.map(m=>sumMonth(m).fin),backgroundColor:'rgba(232,126,110,0.75)',borderRadius:4,borderSkipped:false,type:'line',borderColor:'#e87e6e',fill:false,pointRadius:4,tension:0.3}
+    ]},
+    options:{plugins:{legend:{labels:{color:'#5a7090',font:{size:10},boxWidth:10}}},scales:{x:{stacked:true,grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}}},y:{stacked:false,grid:{color:'#243044'},ticks:{color:'#5a7090',font:{size:10}},beginAtZero:true}}}
+  });
+}
+function setCompareMonth(mm,el){chartCompareMonth=mm;document.querySelectorAll('#compareMonthRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderCompareChart();}
+
+/* ══════════════════════════
+   MODAL
+══════════════════════════ */
+function openModal(){
+  document.getElementById('entryDate').value=new Date().toISOString().slice(0,10);
+  ['eBrace','eRemov','eAlign','eTrans','eFin'].forEach(id=>document.getElementById(id).value=0);
+  document.getElementById('previewNew').textContent='0';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function updatePreview(){
+  const b=parseInt(document.getElementById('eBrace').value)||0;
+  const r=parseInt(document.getElementById('eRemov').value)||0;
+  const a=parseInt(document.getElementById('eAlign').value)||0;
+  const t=parseInt(document.getElementById('eTrans').value)||0;
+  document.getElementById('previewNew').textContent=b+r+a+t;
+}
+function saveEntry(){
+  const date=document.getElementById('entryDate').value;
+  if(!date){alert('Please select a date.');return;}
+  if(date<'2022-11-01'){alert('Date must be from November 2022 onwards.');return;}
+  const brace=parseInt(document.getElementById('eBrace').value)||0;
+  const remov=parseInt(document.getElementById('eRemov').value)||0;
+  const align=parseInt(document.getElementById('eAlign').value)||0;
+  const trans=parseInt(document.getElementById('eTrans').value)||0;
+  const fin=parseInt(document.getElementById('eFin').value)||0;
+  if(brace+remov+align+trans+fin===0){alert('Please enter at least one patient.');return;}
+  const existing=entries.findIndex(e=>e.date===date);
+  if(existing>=0){if(!confirm(`An entry for ${date} already exists. Replace it?`))return;entries.splice(existing,1);}
+  entries.push({date,brace,remov,align,trans,fin});
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+  localStorage.setItem('pp_entries',JSON.stringify(entries));
+  dailyMonth=date.slice(0,7);
+  closeModal();renderPage(currentPage);
+}
+function deleteEntry(idx){
+  if(!confirm('Delete this entry?'))return;
+  entries.splice(idx,1);
+  localStorage.setItem('pp_entries',JSON.stringify(entries));
+  renderPage(currentPage);
+}
+
+
+/* ══════════════════════════
+   ACTIVE PATIENTS
+══════════════════════════ */
+let activeN = 12;
+let netN = 12;
+
+function renderActive() {
+  const allMs = allMonths();
+  const totalNew = allMs.reduce((s,m) => s + sumMonth(m).newTotal, 0);
+  const totalFin = allMs.reduce((s,m) => s + sumMonth(m).fin, 0);
+  const active = totalNew - totalFin;
+  document.getElementById('activeCount').textContent = active;
+  document.getElementById('activeTotalNew').textContent = totalNew;
+  document.getElementById('activeTotalFin').textContent = totalFin;
+  renderActiveChart();
+  renderNetChart();
+}
+
+function renderActiveChart() {
+  destroyChart('chartActive');
+  const ctx = document.getElementById('chartActive'); if(!ctx) return;
+  const months = activeN >= 9999 ? allMonths() : allMonths().slice(-activeN);
+  // Compute cumulative active up to each month
+  const allMs = allMonths();
+  const data = months.map(m => {
+    const msUpTo = allMs.filter(x => x <= m);
+    const cumNew = msUpTo.reduce((s,x) => s + sumMonth(x).newTotal, 0);
+    const cumFin = msUpTo.reduce((s,x) => s + sumMonth(x).fin, 0);
+    return cumNew - cumFin;
+  });
+  const c = ctx.getContext('2d');
+  const grad = c.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(176,136,232,0.3)'); grad.addColorStop(1,'rgba(176,136,232,0.0)');
+  charts['chartActive'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months.map(m => monthShort(m)),
+      datasets: [{
+        label: 'Active Patients',
+        data,
+        borderColor: '#b088e8',
+        backgroundColor: grad,
+        tension: 0.35,
+        fill: true,
+        pointBackgroundColor: '#b088e8',
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      plugins: {legend:{display:false}, tooltip:{callbacks:{label:c=>`Active: ${c.raw}`}}},
+      scales: {
+        x: {grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}},
+        y: {grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}, beginAtZero:true}
+      }
+    }
+  });
+}
+
+function renderNetChart() {
+  destroyChart('chartNet');
+  const ctx = document.getElementById('chartNet'); if(!ctx) return;
+  const months = netN >= 9999 ? allMonths() : allMonths().slice(-netN);
+  const data = months.map(m => sumMonth(m).newTotal - sumMonth(m).fin);
+  const colors = data.map(v => v >= 0 ? 'rgba(110,168,232,0.8)' : 'rgba(232,126,110,0.8)');
+  charts['chartNet'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: months.map(m => monthShort(m)),
+      datasets: [{
+        label: 'Net',
+        data,
+        backgroundColor: colors,
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      plugins: {legend:{display:false}, tooltip:{callbacks:{label:c=>`Net: ${c.raw > 0 ? '+' : ''}${c.raw}`}}},
+      scales: {
+        x: {grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}},
+        y: {grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}, beginAtZero:false}
+      }
+    }
+  });
+}
+
+function setActiveN(n, el) {
+  activeN = n;
+  document.querySelectorAll('#activeRangeRow .rbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderActiveChart();
+}
+function setNetN(n, el) {
+  netN = n;
+  document.querySelectorAll('#netRangeRow .rbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderNetChart();
+}
+
+/* ══════════════════════════
+   EXPORT
+══════════════════════════ */
+function exportCSV(){
+  if(!entries.length){alert('No entries to export.');return;}
+  const header=['Date','Braces','Removable','Aligners','Transfers','New Total','Finished'];
+  const rows=entries.map(e=>[e.date,e.brace,e.remov,e.align,e.trans,e.brace+e.remov+e.align+e.trans,e.fin]);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([[header,...rows].map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));
+  a.download='practice-patients.csv';a.click();
+}
+
+/* ══════════════════════════
+   PWA
+══════════════════════════ */
+(function(){
+  const manifest={name:"PracticePatients",short_name:"Patients",description:"Track orthodontic practice patients",start_url:"./index.html",display:"standalone",background_color:"#080d14",theme_color:"#080d14",orientation:"portrait",icons:[{src:"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#080d14"/><text x="256" y="340" font-size="260" text-anchor="middle" font-family="Georgia,serif" fill="#6ea8e8">🦷</text></svg>'),sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"}]};
+  const link=document.createElement('link');link.rel='manifest';link.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'}));document.head.appendChild(link);
+  if('serviceWorker' in navigator){const sw=`const C='pp-v1';self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(['./'])).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request))));`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}
+})();
+
+/* ══════════════════════════
+   INIT
+══════════════════════════ */
+document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+Chart.defaults.color='#5a7090';
+Chart.defaults.font.family='IBM Plex Sans';
+renderDaily();
+</script>
+</body>
+</html>
