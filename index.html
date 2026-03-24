@@ -500,6 +500,71 @@ function setYearView(v,el){
   renderYearly();
 }
 
+
+/* ══════════════════════════
+   YEARLY HELPER FUNCTIONS
+══════════════════════════ */
+function renderGrowthRates(rows) {
+  const pairs = [];
+  for (let i = 1; i < rows.length; i++) {
+    const prev = rows[i-1].newT;
+    const curr = rows[i].newT;
+    if (prev > 0 && curr > 0) {
+      const pct = ((curr - prev) / prev * 100).toFixed(1);
+      const pos = curr >= prev;
+      pairs.push({from: rows[i-1].label, to: rows[i].label, pct, pos});
+    }
+  }
+  if (!pairs.length) return '';
+  return `<div class="sec-title">Year-on-Year Growth</div>
+    <div class="period-table">
+      <div class="pt-header" style="grid-template-columns:1fr 1fr 80px;"><span>From</span><span>To</span><span>Growth</span></div>
+      ${pairs.map(p=>`<div class="pt-row" style="grid-template-columns:1fr 1fr 80px;">
+        <span class="pname">${p.from}</span><span class="pname">${p.to}</span>
+        <span class="pval" style="color:${p.pos?'var(--new)':'var(--fin)'};font-weight:600;">${p.pos?'+':''}${p.pct}%</span>
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderSameMonthTable(rows, view) {
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // For calendar years: show Jan-Dec. For practice years: show Nov-Oct
+  const monthOrder = view === 'prac'
+    ? [10,11,0,1,2,3,4,5,6,7,8,9]  // Nov=10, Dec=11, Jan=0 ... Oct=9
+    : [0,1,2,3,4,5,6,7,8,9,10,11];  // Jan-Dec
+
+  // Build data: for each month, get new patients per period
+  const tableRows = monthOrder.map(mIdx => {
+    const mLabel = monthNames[mIdx];
+    const cells = rows.map(r => {
+      // Find months matching this index in the period
+      let months;
+      if (view === 'cal') {
+        months = monthsInCalYear(parseInt(r.label) || new Date().getFullYear())
+          .filter(m => parseInt(m.slice(5,7))-1 === mIdx);
+      } else {
+        const py = pracYears().find(p => p.label === r.label);
+        months = py ? monthsInPracYear(py).filter(m => parseInt(m.slice(5,7))-1 === mIdx) : [];
+      }
+      const val = months.reduce((s,m) => s + sumMonth(m).newTotal, 0);
+      return val;
+    });
+    return {mLabel, cells};
+  });
+
+  const colStyle = `grid-template-columns:50px ${rows.map(()=>'1fr').join(' ')};`;
+  return `<div class="sec-title">Same Month Across ${view==='cal'?'Years':'Practice Years'}</div>
+    <div class="period-table" style="overflow-x:auto;">
+      <div class="pt-header" style="${colStyle}">
+        <span>Month</span>${rows.map(r=>`<span>${r.label.replace('Year ','Yr')}</span>`).join('')}
+      </div>
+      ${tableRows.map(r=>`<div class="pt-row" style="${colStyle}">
+        <span class="pname" style="font-size:11px;">${r.mLabel}</span>
+        ${r.cells.map(v=>`<span class="pval ${v>0?'hi':''}">${v||'—'}</span>`).join('')}
+      </div>`).join('')}
+    </div>`;
+}
+
 function renderYearly(){
   const isNew=yearlyCat==='new';
   const allMs=allMonths();
@@ -560,7 +625,10 @@ function renderYearly(){
         <div class="pt-header" style="grid-template-columns:1fr 90px;"><span>Period</span><span>Monthly Avg</span></div>
         ${rows.map(r=>`<div class="pt-row" style="grid-template-columns:1fr 90px;"><span class="pname">${r.label}</span><span class="pval hi">${r.avgNew.toFixed(1)}</span></div>`).join('')}
         <div class="pt-footer" style="grid-template-columns:1fr 90px;"><span>Overall Avg</span><span>${overallAvgNew.toFixed(1)}</span></div>
-      </div>`;
+      </div>
+      ${yearView==='prac' ? renderGrowthRates(rows) : ''}
+      ${renderSameMonthTable(rows, yearView)}
+    `;
   } else {
     cont.innerHTML=`
       <div class="stats-grid" style="margin-bottom:12px;">
