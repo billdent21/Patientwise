@@ -381,7 +381,7 @@ function pracYears(){
   const now=new Date();
   const maxN=(now.getFullYear()-2022)+(now.getMonth()>=10?1:0);
   const yrs=[];
-  for(let n=1;n<=maxN+1;n++){const sy=2021+n;yrs.push({n,label:`Year ${n}`,start:`${sy}-11`,end:`${sy+1}-10`});}
+  for(let n=1;n<=maxN+1;n++){const sy=2021+n;yrs.push({n,label:`Year ${n}`,start:`${sy}-11`,end:`${sy+1}-10`,startY:sy});}
   return yrs;
 }
 function monthsInCalYear(y){return allMonths().filter(m=>m.startsWith(y+''));}
@@ -819,7 +819,9 @@ function renderCharts(){
 
   chartTrendN=12; typeN=12;
   chartYearSel=calYrs[calYrs.length-1]; pracYearSel=null;
-  renderTrendChart(); renderTypeChart(); renderYearMonthChart(); renderCompareChart();
+  renderTrendChart(); renderCumulativeChart(); renderTypeChart();
+  renderCalOverlayChart(); renderPracOverlayChart();
+  renderYearMonthChart(); renderCompareChart();
 }
 
 let typeN=12;
@@ -838,6 +840,76 @@ function renderTrendChart(){
   });
 }
 function setTrendN(n,el){chartTrendN=n;document.querySelectorAll('#trendRangeRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderTrendChart();}
+
+
+function renderCumulativeChart() {
+  destroyChart('chartCumulative');
+  const ctx = document.getElementById('chartCumulative'); if(!ctx) return;
+  const months = allMonths();
+  let cumNew = 0, cumActive = 0;
+  const newData = [], activeData = [], labels = [];
+  months.forEach(m => {
+    const s = sumMonth(m);
+    cumNew += s.newTotal;
+    cumActive = cumNew - months.filter(x => x <= m).reduce((t,x) => t + sumMonth(x).fin, 0);
+    newData.push(cumNew);
+    activeData.push(cumActive);
+    labels.push(new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'}));
+  });
+  charts['chartCumulative'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Total New', data: newData, borderColor: '#6ea8e8', backgroundColor: 'rgba(110,168,232,0.1)', tension: 0.3, fill: true, pointRadius: 2, borderWidth: 2 },
+      { label: 'Active', data: activeData, borderColor: '#b088e8', backgroundColor: 'rgba(176,136,232,0.1)', tension: 0.3, fill: true, pointRadius: 2, borderWidth: 2 }
+    ]},
+    options: { plugins: { legend: { labels: { color:'#5a7090', font:{size:10}, boxWidth:10 } } }, scales: { x: { grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}} }, y: { grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}, beginAtZero:true } } }
+  });
+}
+
+function renderCalOverlayChart() {
+  destroyChart('chartCalOverlay');
+  const ctx = document.getElementById('chartCalOverlay'); if(!ctx) return;
+  const monthLabels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const calYrs = calYears();
+  const palette = ['#6ea8e8','#7ec8c8','#a888e8','#e8c86e','#e87e6e','#80c880'];
+  const datasets = calYrs.map((y, i) => {
+    const data = monthLabels.map((_, mIdx) => {
+      const m = `${y}-${String(mIdx+1).padStart(2,'0')}`;
+      return sumMonth(m).newTotal || null;
+    });
+    return { label: String(y), data, borderColor: palette[i % palette.length], backgroundColor: 'transparent', tension: 0.3, pointRadius: 3, borderWidth: 2, spanGaps: false };
+  });
+  charts['chartCalOverlay'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: monthLabels, datasets },
+    options: { plugins: { legend: { labels: { color:'#5a7090', font:{size:10}, boxWidth:10 } } }, scales: { x: { grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}} }, y: { grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}, beginAtZero:true } } }
+  });
+}
+
+function renderPracOverlayChart() {
+  destroyChart('chartPracOverlay');
+  const ctx = document.getElementById('chartPracOverlay'); if(!ctx) return;
+  const pracMonthLabels = ['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct'];
+  const pracMonthIdx =    [10,   11,   0,   1,   2,   3,   4,   5,   6,   7,   8,   9];
+  const pys = pracYears();
+  const palette = ['#6ea8e8','#7ec8c8','#a888e8','#e8c86e','#e87e6e'];
+  const datasets = pys.map((py, i) => {
+    let cum = 0;
+    const data = pracMonthIdx.map((mIdx) => {
+      const year = mIdx >= 10 ? py.startY : py.startY + 1;
+      const m = `${year}-${String(mIdx+1).padStart(2,'0')}`;
+      if (m < py.start || m > py.end) return null;
+      cum += sumMonth(m).newTotal;
+      return cum || null;
+    });
+    return { label: py.label, data, borderColor: palette[i % palette.length], backgroundColor: 'transparent', tension: 0.3, pointRadius: 3, borderWidth: 2, spanGaps: false };
+  });
+  charts['chartPracOverlay'] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: pracMonthLabels, datasets },
+    options: { plugins: { legend: { labels: { color:'#5a7090', font:{size:10}, boxWidth:10 } } }, scales: { x: { grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}} }, y: { grid:{color:'#243044'}, ticks:{color:'#5a7090',font:{size:10}}, beginAtZero:true } } }
+  });
+}
 
 function renderTypeChart(){
   destroyChart('chartType');
