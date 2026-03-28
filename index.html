@@ -19,6 +19,8 @@
   --new:#6ea8e8; --new-dim:rgba(110,168,232,0.12);
   --fin:#e87e6e; --fin-dim:rgba(232,126,110,0.12);
   --active:#b088e8; --active-dim:rgba(176,136,232,0.12);
+  --r2b:#f0a050; --r2b-dim:rgba(240,160,80,0.13);
+  --rdis:#80c880; --rdis-dim:rgba(128,200,128,0.12);
   --brace:#6ea8e8; --remov:#7ec8c8; --align:#a888e8; --trans:#e8c86e;
   --accent:#89c4f0; --danger:#c05050;
   --radius:14px; --radius-sm:8px;
@@ -68,6 +70,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .stat-card.fin-c .sval{color:var(--fin);}
 .stat-card.active-c::before{background:var(--active);}
 .stat-card.active-c .sval{color:var(--active);}
+.stat-card.r2b-c::before{background:var(--r2b);}
+.stat-card.r2b-c .sval{color:var(--r2b);}
+.stat-card.rdis-c::before{background:var(--rdis);}
+.stat-card.rdis-c .sval{color:var(--rdis);}
+.stat-card.dur-c::before{background:#c8a8f8;}
+.stat-card.dur-c .sval{color:#c8a8f8;}
 .stat-card.brace-c .sval{color:var(--brace);}
 .stat-card.remov-c .sval{color:var(--remov);}
 .stat-card.align-c .sval{color:var(--align);}
@@ -94,9 +102,24 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:1
 .dpill.align{background:rgba(168,136,232,0.15);color:var(--align);}
 .dpill.trans{background:rgba(232,200,110,0.15);color:var(--trans);}
 .dpill.fin{background:var(--fin-dim);color:var(--fin);}
+.dpill.r2b{background:var(--r2b-dim);color:var(--r2b);}
+.dpill.rdis{background:var(--rdis-dim);color:var(--rdis);}
 .day-total-badge{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--accent);flex-shrink:0;min-width:28px;text-align:right;}
 .day-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:3px;border-radius:5px;transition:color .15s;flex-shrink:0;}
 .day-del:hover{color:var(--danger);}
+.day-edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:3px;border-radius:5px;transition:color .15s;flex-shrink:0;}
+.day-edit:hover{color:var(--accent);}
+.bulk-table{width:100%;border-collapse:collapse;font-size:12px;}
+.bulk-table th{text-align:center;padding:6px 4px;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface2);z-index:1;}
+.bulk-table th:first-child{text-align:left;}
+.bulk-table td{padding:5px 3px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle;}
+.bulk-table td:first-child{text-align:left;font-size:11px;color:var(--muted);padding-left:4px;white-space:nowrap;}
+.bulk-table tr:hover td{background:var(--surface2);}
+.bulk-table input[type=number]{width:42px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 3px;color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;text-align:center;outline:none;}
+.bulk-table input[type=number]:focus{border-color:var(--accent);}
+.bulk-scroll{max-height:55vh;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);}
+.bulk-legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;font-size:11px;}
+.bulk-legend span{padding:3px 8px;border-radius:5px;font-weight:500;}
 .empty{text-align:center;color:var(--dim);font-size:13px;padding:28px 0;}
 
 /* MONTH NAV */
@@ -157,6 +180,8 @@ input:focus{border-color:var(--accent);}
 .count-field.align input:focus{border-color:var(--align);}
 .count-field.trans input:focus{border-color:var(--trans);}
 .count-field.fin input:focus{border-color:var(--fin);}
+.count-field.r2b input:focus{border-color:var(--r2b);}
+.count-field.rdis input:focus{border-color:var(--rdis);}
 .total-preview{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 14px;display:flex;justify-content:space-between;align-items:center;}
 .total-preview span:first-child{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
 .total-preview span:last-child{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--accent);}
@@ -171,6 +196,7 @@ input:focus{border-color:var(--accent);}
   <div class="header-top">
     <div class="app-title">Practice<em>Patients</em></div>
     <div style="display:flex;gap:6px;">
+      <button class="hbtn" onclick="openBulk()" style="color:var(--r2b);">✏️ Bulk</button>
       <button class="hbtn blue" onclick="exportCSV()">⬇ CSV</button>
     </div>
   </div>
@@ -202,6 +228,10 @@ input:focus{border-color:var(--accent);}
   </div>
   <div class="stats-grid">
     <div class="stat-card fin-c stat-card-wide"><div class="slbl">Finished Patients This Month</div><div class="sval" id="dFinTotal">0</div></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card r2b-c"><div class="slbl">🔵→🦷 To Braces</div><div class="sval" id="dR2B">0</div></div>
+    <div class="stat-card rdis-c"><div class="slbl">🔵→✋ Discharged</div><div class="sval" id="dRDis">0</div></div>
   </div>
   <div class="sec-title">Daily Entries</div>
   <div class="day-list" id="dayList"></div>
@@ -281,7 +311,7 @@ input:focus{border-color:var(--accent);}
 <!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
-    <div class="modal-title">Record a Day</div>
+    <div class="modal-title" id="modalTitle">Record a Day</div>
     <div class="form-group"><label>Date</label><input type="date" id="entryDate"/></div>
 
     <div class="sec-title" style="margin-top:4px;">🆕 New Patients</div>
@@ -302,6 +332,15 @@ input:focus{border-color:var(--accent);}
       <input type="number" id="eFin" min="0" value="0" oninput="updatePreview()"/>
     </div>
 
+    <div class="sec-title" style="margin-top:4px;">🔵 Removable Phase Completions</div>
+    <div class="count-grid">
+      <div class="count-field r2b form-group"><label>🔵→🦷 To Braces</label><input type="number" id="eR2B" min="0" value="0" oninput="updatePreview()"/></div>
+      <div class="count-field rdis form-group"><label>🔵→✋ Discharged</label><input type="number" id="eRDis" min="0" value="0" oninput="updatePreview()"/></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6;background:var(--surface2);border-radius:8px;padding:10px;">
+      <b style="color:var(--r2b);">→ Braces:</b> adds to braces count, removable phase complete<br/>
+      <b style="color:var(--rdis);">→ Discharged:</b> counted as a fully finished patient
+    </div>
     <button class="submit-btn" onclick="saveEntry()">Save Entry</button>
     <button class="cancel-btn" onclick="closeModal()">Cancel</button>
   </div>
@@ -350,7 +389,7 @@ function monthsInPracYear(py){return allMonths().filter(m=>m>=py.start&&m<=py.en
 function entriesForMonth(m){return entries.filter(e=>e.date.slice(0,7)===m);}
 function sumMonth(m){
   const es=entriesForMonth(m);
-  return{brace:es.reduce((s,e)=>s+e.brace,0),remov:es.reduce((s,e)=>s+e.remov,0),align:es.reduce((s,e)=>s+e.align,0),trans:es.reduce((s,e)=>s+e.trans,0),newTotal:es.reduce((s,e)=>s+e.brace+e.remov+e.align+e.trans,0),fin:es.reduce((s,e)=>s+e.fin,0)};
+  const r2b=es.reduce((s,e)=>s+(e.r2b||0),0);const rdis=es.reduce((s,e)=>s+(e.rdis||0),0);return{brace:es.reduce((s,e)=>s+e.brace,0)+r2b,remov:es.reduce((s,e)=>s+e.remov,0),align:es.reduce((s,e)=>s+e.align,0),trans:es.reduce((s,e)=>s+e.trans,0),newTotal:es.reduce((s,e)=>s+e.brace+e.remov+e.align+e.trans,0),fin:es.reduce((s,e)=>s+e.fin,0)+rdis,r2b,rdis,removFin:r2b+rdis};
 }
 function avgOf(arr){const nz=arr.filter(v=>v>0);return nz.length?nz.reduce((a,b)=>a+b,0)/nz.length:0;}
 
@@ -386,6 +425,8 @@ function renderDaily(){
   document.getElementById('dAlign').textContent=s.align;
   document.getElementById('dTrans').textContent=s.trans;
   document.getElementById('dFinTotal').textContent=s.fin;
+  document.getElementById('dR2B').textContent=s.r2b||0;
+  document.getElementById('dRDis').textContent=s.rdis||0;
   const es=entriesForMonth(dailyMonth).sort((a,b)=>b.date.localeCompare(a.date));
   const list=document.getElementById('dayList');
   if(!es.length){list.innerHTML='<div class="empty">No entries for this month</div>';return;}
@@ -399,6 +440,8 @@ function renderDaily(){
     if(e.align>0)pills.push(`<span class="dpill align">✨ ${e.align}</span>`);
     if(e.trans>0)pills.push(`<span class="dpill trans">🔄 ${e.trans}</span>`);
     if(e.fin>0)pills.push(`<span class="dpill fin">🎓 ${e.fin}</span>`);
+    if((e.r2b||0)>0)pills.push(`<span class="dpill r2b">🔵→🦷 ${e.r2b}</span>`);
+    if((e.rdis||0)>0)pills.push(`<span class="dpill rdis">🔵→✋ ${e.rdis}</span>`);
     return`<div class="day-item">
       <div class="day-date-col">
         <div class="day-date-num">${dd.getDate()}</div>
@@ -406,6 +449,7 @@ function renderDaily(){
       </div>
       <div class="day-pills">${pills.join('')}</div>
       <div class="day-total-badge">${newT+e.fin}</div>
+      <button class="day-edit" onclick="editEntry(${ri})">✏️</button>
       <button class="day-del" onclick="deleteEntry(${ri})">✕</button>
     </div>`;
   }).join('');
@@ -565,6 +609,85 @@ function renderSameMonthTable(rows, view) {
     </div>`;
 }
 
+
+function renderTreatmentDuration() {
+  const allMs = allMonths();
+  const now = allMs[allMs.length - 1];
+
+  // Cumulative totals up to now
+  const cumFinNow = allMs.reduce((s,m) => s + sumMonth(m).fin, 0);
+  const cumR2BNow = allMs.reduce((s,m) => s + (sumMonth(m).r2b||0), 0);
+
+  // Cumulative new patients 24 months ago
+  const d = new Date(now + '-01');
+  d.setMonth(d.getMonth() - 24);
+  const ref24 = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  const msUpTo24 = allMs.filter(m => m <= ref24);
+  const cumNew24 = msUpTo24.reduce((s,m) => s + sumMonth(m).newTotal, 0);
+  const cumRemov24 = msUpTo24.reduce((s,m) => s + sumMonth(m).remov, 0);
+
+  // Ratio: finished now vs new 24mo ago
+  const ratio = cumNew24 > 0 ? (cumFinNow / cumNew24 * 100).toFixed(1) : '—';
+  // Estimated avg duration: if ratio < 100%, avg > 24mo; if > 100%, avg < 24mo
+  const estDur = (cumFinNow > 0 && cumNew24 > 0)
+    ? (24 * cumNew24 / cumFinNow).toFixed(1)
+    : '—';
+
+  // Removable phase: r2b conversions vs removable new from 24mo ago
+  const r2bRatio = cumRemov24 > 0 ? (cumR2BNow / cumRemov24 * 100).toFixed(1) : '—';
+  const r2bDur = (cumR2BNow > 0 && cumRemov24 > 0)
+    ? (24 * cumRemov24 / cumR2BNow).toFixed(1)
+    : '—';
+
+  const ref24Label = new Date(ref24+'-01').toLocaleString('default',{month:'short',year:'numeric'});
+  const nowLabel = new Date(now+'-01').toLocaleString('default',{month:'short',year:'numeric'});
+
+  return `<div class="sec-title">Treatment Duration</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">
+      Comparing cumulative finished <b style="color:var(--text)">(${nowLabel})</b> vs cumulative new from 24 months prior <b style="color:var(--text)">(${ref24Label})</b>
+    </div>
+    <div class="stats-grid" style="margin-bottom:10px;">
+      <div class="stat-card fin-c">
+        <div class="slbl">Cum. Finished</div>
+        <div class="sval">${cumFinNow}</div>
+      </div>
+      <div class="stat-card new-c">
+        <div class="slbl">Cum. New (−24mo)</div>
+        <div class="sval">${cumNew24}</div>
+      </div>
+      <div class="stat-card dur-c">
+        <div class="slbl">Completion Ratio</div>
+        <div class="sval">${ratio}%</div>
+      </div>
+      <div class="stat-card dur-c">
+        <div class="slbl">Est. Avg Duration</div>
+        <div class="sval">${estDur}<span style="font-size:14px;"> mo</span></div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">🔵 Removable Phase (to braces)</div>
+    <div class="stats-grid" style="margin-bottom:6px;">
+      <div class="stat-card r2b-c">
+        <div class="slbl">Remov→Braces</div>
+        <div class="sval">${cumR2BNow}</div>
+      </div>
+      <div class="stat-card remov-c">
+        <div class="slbl">Remov New (−24mo)</div>
+        <div class="sval">${cumRemov24}</div>
+      </div>
+      <div class="stat-card dur-c">
+        <div class="slbl">Remov Ratio</div>
+        <div class="sval">${r2bRatio}%</div>
+      </div>
+      <div class="stat-card dur-c">
+        <div class="slbl">Remov Est. Duration</div>
+        <div class="sval">${r2bDur}<span style="font-size:14px;"> mo</span></div>
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--dim);line-height:1.5;background:var(--surface2);border-radius:8px;padding:10px;margin-top:4px;">
+      <b>How to read:</b> Ratio &lt; 100% means not all cases from 24mo ago have finished yet — avg duration is likely &gt; 24mo. Ratio &gt; 100% means some older cases also completed — avg duration &lt; 24mo.
+    </div>`;
+}
+
 function renderYearly(){
   const isNew=yearlyCat==='new';
   const allMs=allMonths();
@@ -628,6 +751,7 @@ function renderYearly(){
       </div>
       ${yearView==='prac' ? renderGrowthRates(rows) : ''}
       ${renderSameMonthTable(rows, yearView)}
+      ${renderTreatmentDuration()}
     `;
   } else {
     cont.innerHTML=`
@@ -772,16 +896,96 @@ function renderCompareChart(){
 }
 function setCompareMonth(mm,el){chartCompareMonth=mm;document.querySelectorAll('#compareMonthRow .rbtn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderCompareChart();}
 
+
+/* ══════════════════════════
+   EDIT ENTRY
+══════════════════════════ */
+let editingIdx = null;
+
+function editEntry(idx) {
+  const e = entries[idx];
+  editingIdx = idx;
+  document.getElementById('modalTitle').textContent = 'Edit Entry';
+  document.getElementById('entryDate').value = e.date;
+  document.getElementById('entryDate').disabled = true;
+  document.getElementById('eBrace').value = e.brace || 0;
+  document.getElementById('eRemov').value = e.remov || 0;
+  document.getElementById('eAlign').value = e.align || 0;
+  document.getElementById('eTrans').value = e.trans || 0;
+  document.getElementById('eFin').value = e.fin || 0;
+  document.getElementById('eR2B').value = e.r2b || 0;
+  document.getElementById('eRDis').value = e.rdis || 0;
+  updatePreview();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+/* ══════════════════════════
+   BULK EDIT
+══════════════════════════ */
+function openBulk() {
+  const months = allMonths();
+  const tbody = document.getElementById('bulkTableBody');
+  tbody.innerHTML = months.slice().reverse().map(m => {
+    const e = entries.find(x => x.date === m + '-01') || {};
+    const lbl = new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'});
+    return `<tr>
+      <td>${lbl}</td>
+      <td><input type="number" class="b-brace" data-m="${m}" min="0" value="${e.brace||0}"/></td>
+      <td><input type="number" class="b-remov" data-m="${m}" min="0" value="${e.remov||0}"/></td>
+      <td><input type="number" class="b-align" data-m="${m}" min="0" value="${e.align||0}"/></td>
+      <td><input type="number" class="b-trans" data-m="${m}" min="0" value="${e.trans||0}"/></td>
+      <td><input type="number" class="b-fin"   data-m="${m}" min="0" value="${e.fin||0}"/></td>
+      <td><input type="number" class="b-r2b"   data-m="${m}" min="0" value="${e.r2b||0}" style="border-color:var(--r2b);"/></td>
+      <td><input type="number" class="b-rdis"  data-m="${m}" min="0" value="${e.rdis||0}" style="border-color:var(--rdis);"/></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('bulkOverlay').classList.add('open');
+}
+
+function closeBulk() {
+  document.getElementById('bulkOverlay').classList.remove('open');
+}
+
+function saveBulk() {
+  const months = allMonths();
+  months.forEach(m => {
+    const date = m + '-01';
+    const brace = parseInt(document.querySelector(`.b-brace[data-m="${m}"]`).value)||0;
+    const remov = parseInt(document.querySelector(`.b-remov[data-m="${m}"]`).value)||0;
+    const align = parseInt(document.querySelector(`.b-align[data-m="${m}"]`).value)||0;
+    const trans = parseInt(document.querySelector(`.b-trans[data-m="${m}"]`).value)||0;
+    const fin   = parseInt(document.querySelector(`.b-fin[data-m="${m}"]`).value)||0;
+    const r2b   = parseInt(document.querySelector(`.b-r2b[data-m="${m}"]`).value)||0;
+    const rdis  = parseInt(document.querySelector(`.b-rdis[data-m="${m}"]`).value)||0;
+    const total = brace+remov+align+trans+fin+r2b+rdis;
+    const idx = entries.findIndex(x => x.date === date);
+    if (total > 0) {
+      const entry = {date, brace, remov, align, trans, fin, r2b, rdis};
+      if (idx >= 0) entries[idx] = entry;
+      else entries.push(entry);
+    } else {
+      if (idx >= 0) entries.splice(idx, 1);
+    }
+  });
+  entries.sort((a,b) => a.date.localeCompare(b.date));
+  localStorage.setItem('pp_entries', JSON.stringify(entries));
+  closeBulk();
+  renderPage(currentPage);
+}
+
 /* ══════════════════════════
    MODAL
 ══════════════════════════ */
 function openModal(){
+  editingIdx = null;
+  document.getElementById('modalTitle').textContent = 'Record a Day';
   document.getElementById('entryDate').value=new Date().toISOString().slice(0,10);
-  ['eBrace','eRemov','eAlign','eTrans','eFin'].forEach(id=>document.getElementById(id).value=0);
+  document.getElementById('entryDate').disabled = false;
+  ['eBrace','eRemov','eAlign','eTrans','eFin','eR2B','eRDis'].forEach(id=>document.getElementById(id).value=0);
   document.getElementById('previewNew').textContent='0';
   document.getElementById('modalOverlay').classList.add('open');
 }
-function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');editingIdx=null;document.getElementById('entryDate').disabled=false;}
 function updatePreview(){
   const b=parseInt(document.getElementById('eBrace').value)||0;
   const r=parseInt(document.getElementById('eRemov').value)||0;
@@ -798,10 +1002,16 @@ function saveEntry(){
   const align=parseInt(document.getElementById('eAlign').value)||0;
   const trans=parseInt(document.getElementById('eTrans').value)||0;
   const fin=parseInt(document.getElementById('eFin').value)||0;
-  if(brace+remov+align+trans+fin===0){alert('Please enter at least one patient.');return;}
-  const existing=entries.findIndex(e=>e.date===date);
-  if(existing>=0){if(!confirm(`An entry for ${date} already exists. Replace it?`))return;entries.splice(existing,1);}
-  entries.push({date,brace,remov,align,trans,fin});
+  const r2b=parseInt(document.getElementById('eR2B').value)||0;
+  const rdis=parseInt(document.getElementById('eRDis').value)||0;
+  if(brace+remov+align+trans+fin+r2b+rdis===0){alert('Please enter at least one patient.');return;}
+  if (editingIdx !== null) {
+    entries[editingIdx] = {date, brace, remov, align, trans, fin, r2b, rdis};
+  } else {
+    const existing=entries.findIndex(e=>e.date===date);
+    if(existing>=0){if(!confirm(`An entry for ${date} already exists. Replace it?`))return;entries.splice(existing,1);}
+    entries.push({date,brace,remov,align,trans,fin,r2b,rdis});
+  }
   entries.sort((a,b)=>a.date.localeCompare(b.date));
   localStorage.setItem('pp_entries',JSON.stringify(entries));
   dailyMonth=date.slice(0,7);
@@ -922,7 +1132,7 @@ function setNetN(n, el) {
 function exportCSV(){
   if(!entries.length){alert('No entries to export.');return;}
   const header=['Date','Braces','Removable','Aligners','Transfers','New Total','Finished'];
-  const rows=entries.map(e=>[e.date,e.brace,e.remov,e.align,e.trans,e.brace+e.remov+e.align+e.trans,e.fin]);
+  const rows=entries.map(e=>[e.date,e.brace,e.remov,e.align,e.trans,e.brace+e.remov+e.align+e.trans,e.fin,e.r2b||0,e.rdis||0]);
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([[header,...rows].map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'}));
   a.download='practice-patients.csv';a.click();
@@ -941,9 +1151,41 @@ function exportCSV(){
    INIT
 ══════════════════════════ */
 document.getElementById('modalOverlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('bulkOverlay').addEventListener('click',function(e){if(e.target===this)closeBulk();});
 Chart.defaults.color='#5a7090';
 Chart.defaults.font.family='IBM Plex Sans';
 renderDaily();
 </script>
+
+<!-- BULK EDIT MODAL -->
+<div class="modal-overlay" id="bulkOverlay">
+  <div class="modal" style="padding-bottom:24px;">
+    <div class="modal-title">Bulk Edit — All Months</div>
+    <div class="bulk-legend">
+      <span style="background:var(--new-dim);color:var(--new);">🦷 Braces</span>
+      <span style="background:var(--remov-dim,rgba(126,200,200,0.15));color:var(--remov);">🔵 Remov</span>
+      <span style="background:var(--align-dim,rgba(168,136,232,0.15));color:var(--align);">✨ Align</span>
+      <span style="background:var(--trans-dim,rgba(232,200,110,0.15));color:var(--trans);">🔄 Trans</span>
+      <span style="background:var(--fin-dim);color:var(--fin);">🎓 Fin</span>
+      <span style="background:var(--r2b-dim);color:var(--r2b);">→🦷 R2B</span>
+      <span style="background:var(--rdis-dim);color:var(--rdis);">→✋ RDis</span>
+    </div>
+    <div class="bulk-scroll">
+      <table class="bulk-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>🦷</th><th>🔵</th><th>✨</th><th>🔄</th>
+            <th>🎓</th><th>→🦷</th><th>→✋</th>
+          </tr>
+        </thead>
+        <tbody id="bulkTableBody"></tbody>
+      </table>
+    </div>
+    <button class="submit-btn" onclick="saveBulk()" style="margin-top:14px;">Save All Changes</button>
+    <button class="cancel-btn" onclick="closeBulk()">Cancel</button>
+  </div>
+</div>
+
 </body>
 </html>
