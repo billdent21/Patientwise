@@ -198,6 +198,8 @@ input:focus{border-color:var(--accent);}
     <div style="display:flex;gap:6px;">
       <button class="hbtn" onclick="openBulk()" style="color:var(--r2b);">✏️ Bulk</button>
       <button class="hbtn blue" onclick="exportCSV()">⬇ CSV</button>
+      <button class="hbtn" onclick="document.getElementById('csvImportInput').click()" style="color:var(--rdis);">⬆ Import</button>
+      <input type="file" id="csvImportInput" accept=".csv" style="display:none;" onchange="importCSV(event)"/>
     </div>
   </div>
   <div class="nav-tabs">
@@ -1196,6 +1198,76 @@ function setNetN(n, el) {
   document.querySelectorAll('#netRangeRow .rbtn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   renderNetChart();
+}
+
+
+/* ══════════════════════════
+   IMPORT CSV
+══════════════════════════ */
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.trim().split('
+');
+    if (lines.length < 2) { alert('File appears empty.'); return; }
+
+    // Detect header to find column positions
+    const header = lines[0].split(',').map(c => c.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
+    const col = name => header.findIndex(h => h.includes(name));
+
+    const dateCol   = col('date');
+    const braceCol  = col('brace');
+    const removCol  = col('remov');
+    const alignCol  = col('align');
+    const transCol  = col('trans');
+    const finCol    = col('finish') >= 0 ? col('finish') : col('fin');
+    const r2bCol    = col('r2b') >= 0 ? col('r2b') : col('tobraces');
+    const rdisCol   = col('rdis') >= 0 ? col('rdis') : col('discharg');
+
+    if (dateCol < 0) { alert('Could not find a Date column in the CSV.'); return; }
+
+    let imported = 0, skipped = 0;
+    const newEntries = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g,''));
+      if (!cols[dateCol]) continue;
+
+      // Normalise date: accept YYYY-MM-DD or YYYY-MM-01
+      let date = cols[dateCol].trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { skipped++; continue; }
+      if (date < '2022-11-01') { skipped++; continue; }
+
+      const brace = parseInt(cols[braceCol]) || 0;
+      const remov = parseInt(cols[removCol]) || 0;
+      const align = parseInt(cols[alignCol]) || 0;
+      const trans = parseInt(cols[transCol]) || 0;
+      const fin   = parseInt(cols[finCol])   || 0;
+      const r2b   = r2bCol >= 0 ? (parseInt(cols[r2bCol]) || 0) : 0;
+      const rdis  = rdisCol >= 0 ? (parseInt(cols[rdisCol]) || 0) : 0;
+
+      if (brace+remov+align+trans+fin+r2b+rdis === 0) continue;
+      newEntries.push({ date, brace, remov, align, trans, fin, r2b, rdis });
+      imported++;
+    }
+
+    if (!imported) { alert('No valid entries found in the CSV.'); return; }
+
+    if (!confirm(`Found ${imported} entries. This will REPLACE all current data. Continue?`)) {
+      event.target.value = '';
+      return;
+    }
+
+    entries = newEntries;
+    entries.sort((a,b) => a.date.localeCompare(b.date));
+    localStorage.setItem('pp_entries', JSON.stringify(entries));
+    event.target.value = '';
+    renderPage(currentPage);
+    alert(`✓ Successfully imported ${imported} entries!`);
+  };
+  reader.readAsText(file);
 }
 
 /* ══════════════════════════
